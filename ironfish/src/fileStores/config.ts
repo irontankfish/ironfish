@@ -47,6 +47,7 @@ export type ConfigOptions = {
   enableRpcTls: boolean
   enableSyncing: boolean
   enableTelemetry: boolean
+  enableUnsupportedNetworking: boolean
   enableMetrics: boolean
   getFundsApi: string
   ipcPath: string
@@ -282,6 +283,7 @@ export class Config extends KeyStore<ConfigOptions> {
       enableRpcTls: DEFAULT_USE_RPC_TLS,
       enableSyncing: true,
       enableTelemetry: false,
+      enableUnsupportedNetworking: false,
       enableMetrics: true,
       getFundsApi: DEFAULT_GET_FUNDS_API,
       ipcPath: files.resolve(files.join(dataDir, 'ironfish.ipc')),
