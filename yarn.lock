@@ -2191,10 +2191,10 @@
     "@napi-rs/blake-hash-win32-ia32-msvc" "1.3.1"
     "@napi-rs/blake-hash-win32-x64-msvc" "1.3.1"
 
-"@napi-rs/cli@2.4.2":
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/@napi-rs/cli/-/cli-2.4.2.tgz#89b32c7d8776004bc9617915605aea769339cf6f"
-  integrity sha512-+yCOuPqernvD8BMphbadF87ElaJ0rjanOZrbnauaEdR07YyoalGw3FTk15HHyflIwQKlYd69gkG5EM4WFkICKw==
+"@napi-rs/cli@2.10.3":
+  version "2.10.3"
+  resolved "https://registry.yarnpkg.com/@napi-rs/cli/-/cli-2.10.3.tgz#61012d6a78eb8e8aefccbd1933f07b9bc9641c72"
+  integrity sha512-J/3zqDX1VLhzl9RNpthAcCSLPaute7J7ImaP926xjJXAcfZmUM6QjJBCrvdMa3aGEfQ3TqDwidUnLj71JHW8QQ==
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"

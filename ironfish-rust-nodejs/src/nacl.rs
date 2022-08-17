@@ -64,6 +64,16 @@ pub fn random_bytes(bytes_length: u32) -> Uint8Array {
     Uint8Array::new(nacl::random_bytes(bytes_length as usize))
 }
 
+#[napi]
+pub fn random_bytes_buffer(bytes_length: u32) -> Buffer {
+    nacl::random_bytes(bytes_length as usize).into()
+}
+
+#[napi]
+pub fn random_bytes_string(bytes_length: u32) -> String {
+    hex::encode(nacl::random_bytes(bytes_length as usize))
+}
+
 #[napi(object)]
 pub struct BoxedMessage {
     pub nonce: String,

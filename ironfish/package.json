@@ -53,7 +53,7 @@
     "lint": "tsc -b && tsc -b tsconfig.test.json && eslint --ext .ts,.tsx,.js,.jsx src/",
     "lint:fix": "tsc -b && tsc -b tsconfig.test.json && eslint --ext .ts,.tsx,.js,.jsx src/ --fix",
     "start": "tsc -b -w",
-    "test": "tsc -b && tsc -b tsconfig.test.json && jest",
+    "test": "tsc -b && tsc -b tsconfig.test.json && node --expose-gc $(yarn bin)/jest",
     "test:slow": "tsc -b && tsc -b tsconfig.test.json && cross-env TEST_INIT_RUST=true jest --testMatch \"**/*.test.slow.ts\" --testPathIgnorePatterns",
     "test:perf": "tsc -b && tsc -b tsconfig.test.json && cross-env TEST_INIT_RUST=true jest --testMatch \"**/*.test.perf.ts\" --testPathIgnorePatterns",
     "test:coverage:html": "tsc -b tsconfig.test.json && jest  --coverage --coverage-reporters html --testPathIgnorePatterns",
