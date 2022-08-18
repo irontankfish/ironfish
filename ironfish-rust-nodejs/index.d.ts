@@ -14,6 +14,10 @@ export const NONCE_LENGTH: number
 export function randomBytes(bytesLength: number): Uint8Array
 export function randomBytesBuffer(bytesLength: number): Buffer
 export function randomBytesString(bytesLength: number): string
+export interface RandomBytes {
+  randomBytes: Array<number>
+}
+export function randomBytesVec(bytesLength: number): Buffer
 export interface BoxedMessage {
   nonce: string
   boxedMessage: string

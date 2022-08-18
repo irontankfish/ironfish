@@ -2,9 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use ironfish_rust::nacl::{self, box_message, bytes_to_secret_key, new_secret_key, unbox_message};
-use napi::bindgen_prelude::*;
-use napi_derive::napi;
+use std::{mem::ManuallyDrop, ops::DerefMut};
+
+use ironfish_rust::nacl::{
+    self, box_message, bytes_to_secret_key, get_random_byte, new_secret_key, unbox_message,
+};
+use napi::{
+    bindgen_prelude::*, noop_finalize, CallContext, ContextlessResult, JsBuffer, JsBufferValue,
+    JsNumber, Ref,
+};
+use napi_derive::{contextless_function, js_function, napi};
 
 #[napi]
 pub const KEY_LENGTH: u32 = nacl::KEY_LENGTH as u32;
@@ -66,12 +73,29 @@ pub fn random_bytes(bytes_length: u32) -> Uint8Array {
 
 #[napi]
 pub fn random_bytes_buffer(bytes_length: u32) -> Buffer {
-    nacl::random_bytes(bytes_length as usize).into()
+    // nacl::random_bytes(bytes_length as usize).into()
+    // Vec::with_capacity(bytes_length as usize).into()
+    [0u8; 32].to_vec().into()
 }
 
 #[napi]
 pub fn random_bytes_string(bytes_length: u32) -> String {
     hex::encode(nacl::random_bytes(bytes_length as usize))
+}
+
+#[napi(object)]
+pub struct RandomBytes {
+    pub random_bytes: Vec<u8>,
+}
+
+#[napi]
+pub fn random_bytes_vec(env: Env, bytes_length: u32) -> JsBuffer {
+    let mut v = env.create_buffer(bytes_length as usize).unwrap();
+    for i in v.iter_mut() {
+        // *i = get_random_byte()
+        *i = 1
+    }
+    v.into_raw()
 }
 
 #[napi(object)]
