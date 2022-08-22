@@ -236,10 +236,11 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { KEY_LENGTH, NONCE_LENGTH, BoxKeyPair, randomBytes, randomBytesBuffer, randomBytesString, randomBytesVec, boxMessage, unboxMessage, NoteEncrypted, Note, TransactionPosted, Transaction, verifyTransactions, generateKey, generateNewPublicAddress, initializeSapling, FoundBlockResult, ThreadPoolHandler, isValidPublicAddress } = nativeBinding
+const { KEY_LENGTH, NONCE_LENGTH, Foo, BoxKeyPair, randomBytes, randomBytesBuffer, randomBytesString, randomBytesVec, boxMessage, unboxMessage, NoteEncrypted, Note, TransactionPosted, Transaction, verifyTransactions, generateKey, generateNewPublicAddress, initializeSapling, FoundBlockResult, ThreadPoolHandler, isValidPublicAddress, bar } = nativeBinding
 
 module.exports.KEY_LENGTH = KEY_LENGTH
 module.exports.NONCE_LENGTH = NONCE_LENGTH
+module.exports.Foo = Foo
 module.exports.BoxKeyPair = BoxKeyPair
 module.exports.randomBytes = randomBytes
 module.exports.randomBytesBuffer = randomBytesBuffer
@@ -258,3 +259,4 @@ module.exports.initializeSapling = initializeSapling
 module.exports.FoundBlockResult = FoundBlockResult
 module.exports.ThreadPoolHandler = ThreadPoolHandler
 module.exports.isValidPublicAddress = isValidPublicAddress
+module.exports.bar = bar

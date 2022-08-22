@@ -6,16 +6,20 @@ import { TimeUtils } from './time'
 
 type SegmentResults = {
   time: number
-  heap: number | null
-  rss: number | null
-  mem: number | null
+  heap: number
+  rss: number
+  mem: number
+  arrayBuffers: number
+  external: number
 }
 
 type Segment = {
   time: HRTime
-  heap: number | null
-  rss: number | null
-  mem: number | null
+  heap: number
+  rss: number
+  mem: number
+  arrayBuffers: number
+  external: number
 }
 
 type HRTime = [seconds: number, nanoseconds: number]
@@ -44,10 +48,6 @@ function diffTime(startTime: HRTime, endTime: HRTime): number {
 function getSegment(): Segment {
   const time = startTime()
 
-  let heap = null
-  let rss = null
-  let mem = null
-
   if (global.gc) {
     // Need to mark and sweep multiple times to try to collect all of it. You
     // could also just continue to do this until memory stabilizies but this
@@ -55,14 +55,15 @@ function getSegment(): Segment {
     for (let i = 0; i < 5; ++i) {
       global.gc()
     }
-
-    const startMem = process.memoryUsage()
-    heap = startMem.heapUsed
-    rss = startMem.rss
-    mem = heap + rss
   }
+  const startMem = process.memoryUsage()
+  const heap = startMem.heapUsed
+  const rss = startMem.rss
+  const external = startMem.external
+  const arrayBuffers = startMem.arrayBuffers
+  const mem = heap + rss
 
-  return { time, heap, rss, mem }
+  return { time, heap, rss, mem, external, arrayBuffers }
 }
 
 function startSegment(): Segment {
@@ -74,9 +75,12 @@ function endSegment(start: Segment): SegmentResults {
 
   return {
     time: diffTime(start.time, end.time),
-    heap: end.heap && start.heap ? end.heap - start.heap : null,
-    rss: end.rss && start.rss ? end.rss - start.rss : null,
-    mem: end.mem && start.mem ? end.mem - start.mem : null,
+    heap: end.heap && start.heap ? end.heap - start.heap : 0,
+    rss: end.rss && start.rss ? end.rss - start.rss : 0,
+    mem: end.mem && start.mem ? end.mem - start.mem : 0,
+    external: end.external && start.external ? end.external - start.external : 0,
+    arrayBuffers:
+      end.arrayBuffers && start.arrayBuffers ? end.arrayBuffers - start.arrayBuffers : 0,
   }
 }
 
@@ -85,11 +89,11 @@ function renderSegment(segment: SegmentResults, title = 'Benchmark', delimeter =
 
   result.push(`Time: ${TimeUtils.renderSpan(segment.time)}`)
 
-  if (segment.heap && segment.rss && segment.mem) {
-    result.push(`Heap: ${FileUtils.formatMemorySize(segment.heap)}`)
-    result.push(`RSS: ${FileUtils.formatMemorySize(segment.rss)}`)
-    result.push(`Mem: ${FileUtils.formatMemorySize(segment.mem)}`)
-  }
+  result.push(`Heap: ${FileUtils.formatMemorySize(segment.heap)}`)
+  result.push(`RSS: ${FileUtils.formatMemorySize(segment.rss)}`)
+  result.push(`External: ${FileUtils.formatMemorySize(segment.external)}`)
+  result.push(`ArrayBuffers: ${FileUtils.formatMemorySize(segment.arrayBuffers)}`)
+  result.push(`Mem: ${FileUtils.formatMemorySize(segment.mem)}`)
 
   let rendered = result.join(delimeter)
 

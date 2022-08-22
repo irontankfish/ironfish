@@ -3,7 +3,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 import { RollingFilter } from '@ironfish/bfilter'
-import { randomBytesBuffer, randomBytesString, randomBytesVec } from '@ironfish/rust-nodejs'
+import {
+  BoxKeyPair,
+  Foo,
+  FooObj,
+  randomBytesBuffer,
+  randomBytesString,
+  randomBytesVec,
+} from '@ironfish/rust-nodejs'
 import LRU from 'blru'
 import { BufferMap } from 'buffer-map'
 import { randomBytes } from 'crypto'
@@ -56,73 +63,140 @@ const pauseAndGc = async (milliseconds: number) => {
   }
 }
 
-const withSegment = async (title: string, fn: () => any): Promise<string> => {
+const withSegment = async (title: string, fn: () => Promise<void> | void): Promise<string> => {
   const segment = BenchUtils.startSegment()
   await fn()
   const segmentResults = BenchUtils.endSegment(segment)
-  return BenchUtils.renderSegment(segmentResults, title)
+  return BenchUtils.renderSegment(segmentResults, title, '\n\t')
 }
 
+class JSFoo { }
+
 describe('test playground', () => {
-  it.only('compare randomBytes', async () => {
+  it.only('test BoxKeyPair memory stability', async () => {
+    const test_counts = [1, 25, 10_000, 250_000, 1_000_000]
+
+    const results: string[] = []
+    const bufList = []
+
+    await pauseAndGc(1000)
+
+    for (const TEST_COUNT of test_counts) {
+      const result = await withSegment(
+        `BoxKeyPair - ${TEST_COUNT.toLocaleString()} iterations`,
+        async () => {
+          for (let i = 0; i < TEST_COUNT; i += 1) {
+            const x = new Foo()
+            if (i == 5) {
+              bufList.push(x)
+            }
+            if (i % (TEST_COUNT / 10) === 0) {
+              await PromiseUtils.sleep(1000)
+            }
+          }
+          await pauseAndGc(500)
+          await pauseAndGc(500)
+          await pauseAndGc(500)
+        },
+      )
+      results.push(result)
+
+      await pauseAndGc(1000)
+    }
+
+    console.log(results.join('\n'))
+    expect(true).toBe(false)
+  }, 600000)
+
+  it('compare randomBytes', async () => {
     const TEST_COUNT = 1_000_000
 
-    let bufList = []
+    const bufList = []
 
-    const segmentCResults = await withSegment('Rust String to Buffer', async () => {
+    await pauseAndGc(1000)
+
+    const segmentCResults = await withSegment('Rust String > Buffer', async () => {
       for (let i = 0; i < TEST_COUNT; i += 1) {
         const x = Buffer.from(randomBytesString(32), 'hex')
         if (i == 5) {
           bufList.push(x)
         }
+        if (i % (TEST_COUNT / 10) === 0) {
+          await PromiseUtils.sleep(1000)
+        }
       }
-      // await pauseAndGc(1000)
+          await pauseAndGc(500)
+          await pauseAndGc(500)
+          await pauseAndGc(500)
     })
 
     await pauseAndGc(1000)
 
-    const segmentDResults = await withSegment('Rust JsBuffer', () => {
+    const segmentDResults = await withSegment('Rust JsBuffer\t', async () => {
       for (let i = 0; i < TEST_COUNT; i += 1) {
         const x = randomBytesVec(32)
         if (i == 5) {
           bufList.push(x)
         }
+        if (i % (TEST_COUNT / 10) === 0) {
+          await PromiseUtils.sleep(1000)
+        }
       }
-      // await pauseAndGc(1000)
+          await pauseAndGc(500)
+          await pauseAndGc(500)
+          await pauseAndGc(500)
     })
 
     await pauseAndGc(1000)
 
-    const segmentAResults = await withSegment('NodeJS Buffer', async () => {
+    const segmentAResults = await withSegment('NodeJS Buffer\t', async () => {
       for (let i = 0; i < TEST_COUNT; i += 1) {
         const x = randomBytes(32)
         if (i == 5) {
           bufList.push(x)
         }
-      }
-      // await pauseAndGc(1000)
-    })
 
-    await pauseAndGc(1000)
-
-    const segmentBResults = await withSegment('Rust Buffer', async () => {
-      for (let i = 0; i < TEST_COUNT; i += 1) {
-        const x = randomBytesBuffer(32)
-        if (i == 5) {
-          bufList.push(x)
+        if (i % (TEST_COUNT / 10) === 0) {
+          await PromiseUtils.sleep(1000)
         }
       }
-      // await pauseAndGc(1000)
+      await pauseAndGc(1000)
     })
 
     await pauseAndGc(1000)
 
+    const segmentBResults = await withSegment('Rust Buffer\t\t', async () => {
+      for (let i = 0; i < TEST_COUNT; i += 1) {
+        const x = randomBytesBuffer(32)
+        if (i == 5 || i == 10) {
+          bufList.push(x)
+          console.log(x)
+        }
 
+        if (i % (TEST_COUNT / 10) === 0) {
+          await PromiseUtils.sleep(1000)
+        }
+      }
+          // await PromiseUtils.sleep(2000)
+      await pauseAndGc(1000)
+    })
 
-    console.log(segmentAResults)
-    console.log(segmentBResults)
-    console.log(segmentCResults)
-    console.log(segmentDResults)
+    await pauseAndGc(1000)
+
+    const results = [
+      `Number of iterations: ${TEST_COUNT.toLocaleString()}`,
+      segmentAResults,
+      segmentBResults,
+      segmentCResults,
+      segmentDResults,
+    ]
+
+    console.log(results.join('\n'))
+
+    // console.log(segmentAResults)
+    // console.log(segmentBResults)
+    // console.log(segmentCResults)
+    // console.log(segmentDResults)
 
     expect(true).toBe(false)
   }, 600000)

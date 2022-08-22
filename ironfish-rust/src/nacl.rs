@@ -33,6 +33,14 @@ pub fn random_bytes(bytes_length: usize) -> Vec<u8> {
     rand_bytes
 }
 
+pub fn random_bytes_fill(dest: &mut [u8]) {
+    OsRng.fill_bytes(dest);
+    // let mut rand_bytes = vec![0; bytes_length];
+    // OsRng.fill_bytes(&mut rand_bytes);
+
+    // rand_bytes
+}
+
 pub fn get_random_byte() -> u8 {
     OsRng.gen()
 }

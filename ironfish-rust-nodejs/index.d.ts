@@ -11,12 +11,12 @@ export class ExternalObject<T> {
 }
 export const KEY_LENGTH: number
 export const NONCE_LENGTH: number
+export interface FooObj {
+  
+}
 export function randomBytes(bytesLength: number): Uint8Array
 export function randomBytesBuffer(bytesLength: number): Buffer
 export function randomBytesString(bytesLength: number): string
-export interface RandomBytes {
-  randomBytes: Array<number>
-}
 export function randomBytesVec(bytesLength: number): Buffer
 export interface BoxedMessage {
   nonce: string
@@ -40,6 +40,10 @@ export function generateKey(): Key
 export function generateNewPublicAddress(privateKey: string): Key
 export function initializeSapling(): void
 export function isValidPublicAddress(hexAddress: string): boolean
+export class Foo {
+  
+  constructor()
+}
 export class BoxKeyPair {
   constructor()
   static fromHex(secretHex: string): BoxKeyPair
@@ -141,4 +145,7 @@ export class ThreadPoolHandler {
   pause(): void
   getFoundBlock(): FoundBlockResult | null
   getHashRateSubmission(): number
+}
+export namespace bar {
+  export class Barbar {   }
 }
