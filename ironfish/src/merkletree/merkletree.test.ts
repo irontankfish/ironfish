@@ -328,6 +328,17 @@ describe('Merkle tree', function () {
     }
   })
 
+  it('should find that duplicate element is contained', async () => {
+    const tree = await makeTree()
+
+    await tree.add('a')
+    await expect(tree.contained('a', 1)).resolves.toBe(true)
+
+    await tree.add('b')
+    await tree.add('a')
+    await expect(tree.contained('a', 1)).resolves.toBe(true)
+  })
+
   it('does not find value after truncating tree', async () => {
     const tree = await makeTree()
     const elementSize = 32
