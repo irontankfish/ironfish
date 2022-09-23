@@ -11,12 +11,13 @@ use zcash_primitives::{constants::NOTE_COMMITMENT_RANDOMNESS_GENERATOR, pedersen
 use crate::{
     errors,
     merkle_note::sapling_auth_path,
+    primitives::sapling::ValueCommitment,
     proofs::circuit::mint_asset::MintAsset,
     proofs::notes::mint_asset_note::MintAssetNote,
     sapling_bls12::{self, SAPLING},
     serializing::read_scalar,
     witness::WitnessTrait,
-    SaplingKey, primitives::sapling::ValueCommitment, AssetType,
+    AssetType, SaplingKey,
 };
 
 pub struct MintAssetParams {
@@ -98,14 +99,14 @@ impl MintAssetParams {
         let randomness = jubjub::Fr::from_bytes_wide(&buffer);
         let value_commitment = asset_type.value_commitment(value, randomness);
 
-        let p = ExtendedPoint::from(value_commitment.commitment()).to_affine();
+        let value_commitment_point = ExtendedPoint::from(value_commitment.commitment()).to_affine();
         let mut inputs = vec![Scalar::zero(); 7];
         inputs[0] = identifier_inputs[0];
         inputs[1] = identifier_inputs[1];
         inputs[2] = commitment;
         inputs[3] = witness.root_hash();
-        inputs[4] = p.get_u();
-        inputs[5] = p.get_v();
+        inputs[4] = value_commitment_point.get_u();
+        inputs[5] = value_commitment_point.get_v();
         inputs[6] = note_commitment;
 
         let proof_generation_key = minting_key.sapling_proof_generation_key();
@@ -181,7 +182,7 @@ pub struct MintAssetProof {
     pub(crate) asset_generator: jubjub::ExtendedPoint,
     pub(crate) root_hash: Scalar,
     pub(crate) value_commitment: ValueCommitment,
-    pub(crate) asset_type: AssetType
+    pub(crate) asset_type: AssetType,
 }
 
 impl MintAssetProof {
@@ -244,8 +245,8 @@ impl MintAssetProof {
         // inputs[1] = identifier_inputs[1];
         // inputs[2] = commitment;
         // inputs[3] = witness.root_hash();
-        // inputs[4] = p.get_u();
-        // inputs[5] = p.get_v();
+        // inputs[4] = value_commitment_point.get_u();
+        // inputs[5] = value_commitment_point.get_v();
         // inputs[6] = note_commitment;
 
         // Verify proof
