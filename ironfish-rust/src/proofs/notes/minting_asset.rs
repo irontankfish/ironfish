@@ -16,7 +16,7 @@ use crate::{
     sapling_bls12::{self, SAPLING},
     serializing::read_scalar,
     witness::WitnessTrait,
-    SaplingKey,
+    SaplingKey, primitives::sapling::ValueCommitment, AssetType,
 };
 
 pub struct MintAssetParams {
@@ -35,6 +35,17 @@ pub struct MintAssetParams {
     pub(crate) encrypted_note: [u8; 12],
 
     pub(crate) asset_generator: jubjub::ExtendedPoint,
+
+    /// Randomized value commitment. Sometimes referred to as
+    /// `cv` in the literature. It's calculated by multiplying a value by a
+    /// random number. Randomized to help maintain zero knowledge.
+    pub(crate) value_commitment: ValueCommitment,
+
+    /// The root hash of the tree at the time the proof was calculated. Referred to as
+    /// `anchor` in the literature.
+    pub(crate) root_hash: Scalar,
+
+    pub(crate) asset_type: AssetType,
 }
 
 impl MintAssetParams {
@@ -78,13 +89,14 @@ impl MintAssetParams {
             note_hash + (NOTE_COMMITMENT_RANDOMNESS_GENERATOR * commitment_randomness);
         let note_commitment = note_full_point.to_affine().get_u();
 
-        let identifier_bits = multipack::bytes_to_bits_le(asset_info.asset_type().get_identifier());
+        let asset_type = asset_info.asset_type();
+        let identifier_bits = multipack::bytes_to_bits_le(asset_type.get_identifier());
         let identifier_inputs = multipack::compute_multipacking(&identifier_bits);
 
         let mut buffer = [0u8; 64];
         thread_rng().fill(&mut buffer[..]);
         let randomness = jubjub::Fr::from_bytes_wide(&buffer);
-        let value_commitment = asset_info.asset_type().value_commitment(value, randomness);
+        let value_commitment = asset_type.value_commitment(value, randomness);
 
         let p = ExtendedPoint::from(value_commitment.commitment()).to_affine();
         let mut inputs = vec![Scalar::zero(); 7];
@@ -127,6 +139,9 @@ impl MintAssetParams {
             mint_commitment: commitment,
             encrypted_note: [0u8; 12],
             asset_generator: asset_info.asset_type().asset_generator(),
+            root_hash: witness.root_hash(),
+            value_commitment,
+            asset_type,
         };
 
         Ok(params)
@@ -138,6 +153,9 @@ impl MintAssetParams {
             mint_commitment: self.mint_commitment,
             encrypted_note: [0u8; 12],
             asset_generator: self.asset_generator,
+            root_hash: self.root_hash,
+            asset_type: self.asset_type,
+            value_commitment: self.value_commitment,
         };
 
         mint_asset_proof.verify_proof()?;
@@ -161,6 +179,9 @@ pub struct MintAssetProof {
     // TODO: Size made up, copy from MintAssetParams when changed
     pub(crate) encrypted_note: [u8; 12],
     pub(crate) asset_generator: jubjub::ExtendedPoint,
+    pub(crate) root_hash: Scalar,
+    pub(crate) value_commitment: ValueCommitment,
+    pub(crate) asset_type: AssetType
 }
 
 impl MintAssetProof {
@@ -207,12 +228,25 @@ impl MintAssetProof {
 
     pub fn verify_proof(&self) -> Result<(), errors::SaplingProofError> {
         let generator_affine = self.asset_generator.to_affine();
+        let identifier_bits = multipack::bytes_to_bits_le(self.asset_type.get_identifier());
+        let identifier_inputs = multipack::compute_multipacking(&identifier_bits);
 
         let inputs = [
+            identifier_inputs[0],
+            identifier_inputs[1],
+            self.value_commitment,
+            self.root_hash,
             generator_affine.get_u(),
             generator_affine.get_v(),
             self.mint_commitment,
         ];
+        // inputs[0] = identifier_inputs[0];
+        // inputs[1] = identifier_inputs[1];
+        // inputs[2] = commitment;
+        // inputs[3] = witness.root_hash();
+        // inputs[4] = p.get_u();
+        // inputs[5] = p.get_v();
+        // inputs[6] = note_commitment;
 
         // Verify proof
         groth16::verify_proof(&SAPLING.mint_asset_verifying_key, &self.proof, &inputs)
