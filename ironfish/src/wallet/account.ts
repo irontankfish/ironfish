@@ -298,7 +298,7 @@ export class Account {
     return this.accountsDb.loadTransactions(this, tx)
   }
 
-  async deleteTransaction(transaction: Transaction, tx?: IDatabaseTransaction): Promise<void> {
+  async expireTransaction(transaction: Transaction, tx?: IDatabaseTransaction): Promise<void> {
     const transactionHash = transaction.hash()
 
     await this.accountsDb.database.withTransaction(tx, async (tx) => {
@@ -335,8 +335,6 @@ export class Account {
           )
         }
       }
-
-      await this.accountsDb.deleteTransaction(this, transactionHash, tx)
     })
   }
 
