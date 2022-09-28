@@ -8,7 +8,7 @@ import { TransactionValue } from '../../../wallet/database/transactionValue'
 import { RpcRequest } from '../../request'
 import { ApiNamespace, router } from '../router'
 import { serializeRpcAccountTransaction } from './types'
-import { getAccount, getTransactionStatus } from './utils'
+import { getAccount } from './utils'
 
 export type GetAccountTransactionsRequest = { account?: string; hash?: string }
 
@@ -59,12 +59,21 @@ router.register<typeof GetAccountTransactionsRequestSchema, GetAccountTransactio
   async (request, node): Promise<void> => {
     const account = getAccount(node, request.data.account)
 
+    const headSequence = await node.accounts.getAccountHeadSequence(account)
+    const minimumBlockConfirmations = node.config.get('minimumBlockConfirmations')
+
     if (request.data.hash) {
       const hash = Buffer.from(request.data.hash, 'hex')
       const transaction = await account.getTransactionByUnsignedHash(hash)
 
       if (transaction) {
-        await streamTransaction(request, node, account, transaction)
+        await streamTransaction(
+          request,
+          account,
+          transaction,
+          headSequence,
+          minimumBlockConfirmations,
+        )
       }
 
       request.end()
@@ -72,7 +81,13 @@ router.register<typeof GetAccountTransactionsRequestSchema, GetAccountTransactio
     }
 
     for await (const transaction of account.getTransactions()) {
-      await streamTransaction(request, node, account, transaction)
+      await streamTransaction(
+        request,
+        account,
+        transaction,
+        headSequence,
+        minimumBlockConfirmations,
+      )
     }
 
     request.end()
@@ -81,9 +96,10 @@ router.register<typeof GetAccountTransactionsRequestSchema, GetAccountTransactio
 
 const streamTransaction = async (
   request: RpcRequest<GetAccountTransactionsRequest, GetAccountTransactionsResponse>,
-  node: IronfishNode,
   account: Account,
   transaction: TransactionValue,
+  headSequence: number | null,
+  minimumBlockConfirmations: number,
 ): Promise<void> => {
   const serializedTransaction = serializeRpcAccountTransaction(transaction)
 
@@ -97,12 +113,9 @@ const streamTransaction = async (
     }
   }
 
-  const status = await getTransactionStatus(
-    node,
-    transaction.blockHash,
-    transaction.sequence,
-    transaction.transaction.expirationSequence(),
-  )
+  const status = headSequence
+    ? account.getTransactionStatus(transaction, headSequence, minimumBlockConfirmations)
+    : 'unknown'
 
   const serialized = {
     ...serializedTransaction,
