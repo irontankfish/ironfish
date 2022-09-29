@@ -973,6 +973,11 @@ export class Accounts {
 
       await this.db.removeAccount(account, tx)
       await this.db.removeHeadHash(account, tx)
+      await this.db.clearDecryptedNotes(account, tx)
+      await this.db.clearNullifierToNoteHash(account, tx)
+      await this.db.clearTransactions(account, tx)
+      await this.db.clearSequenceToNoteHash(account, tx)
+      await this.db.clearNonChainNoteHashes(account, tx)
     })
 
     this.accounts.delete(account.id)
