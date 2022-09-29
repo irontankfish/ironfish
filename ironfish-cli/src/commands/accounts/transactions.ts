@@ -45,6 +45,7 @@ export class TransactionsCommand extends IronfishCommand {
         {
           status: {
             header: 'Status',
+            minWidth: 11,
           },
           creator: {
             header: 'Creator',
